@@ -1,4 +1,9 @@
 #include <BleGamepad.h>
+#include <TFT_eSPI.h>
+#include "Logo.h"
+
+
+TFT_eSPI tft = TFT_eSPI();         // Invoke custom library
 
 
 BleGamepad bleGamepad("ESP Controller", "ElectroPoint4u", 100);
@@ -18,6 +23,15 @@ BleGamepad bleGamepad("ESP Controller", "ElectroPoint4u", 100);
 #define CLK_165 18
 #define PL_165 21
 #define CS_165 5
+
+/*************************lora************************************/
+#define RX_433 33
+#define TX_433 32
+#define AUX_433 23
+
+#define RX_868 15
+#define TX_868 13
+#define AUX_868 22
 
 const int numBits = 16;   /* Set to 8 * number of shift registers */
 bool KEY[numBits] = {0};
@@ -101,12 +115,13 @@ int Key165(){
 void setup() {
   Serial.begin(115200);
 
+  Serial1.begin(9600, SERIAL_8N1, RX_433 , TX_433);
+  Serial1.begin(9600, SERIAL_8N1, RX_868 , TX_868);
+
   bleGamepad.begin();
   //bleGamepad.setAutoReport(false); // to disable auto reporting, and then use bleGamepad.sendReport(); as needed
   Serial.println("Starting BLE work!");
 
-
-  Serial.begin(115200);
   pinMode(DATA_165, INPUT);
   pinMode(CLK_165, OUTPUT);
   pinMode(PL_165, OUTPUT);
@@ -121,6 +136,13 @@ void setup() {
     //bleGamepad.setTriggers(0 , 0);
     bleGamepad.setAxes(2048 , 2048 , 2048 , 2048 , 2048 , 2048 , 2048 , 2048 );
 
+    tft.begin();
+    tft.fillScreen(TFT_BLACK);
+  
+    tft.pushImage(20 , 15 , 100 , 100 , gImage_Logo);
+    tft.setTextColor(TFT_WHITE , TFT_BLACK);  tft.setTextSize(1);
+    tft.setCursor(40, 120 , 2);
+    tft.println("By Moze ");
 }
 int tempTime = 0;
 int delayTime = 1000;
@@ -248,8 +270,8 @@ void loop() {
     //int value1 = map(analogRead(LH), 0, 4095, 32737, -32737);
     //int value2 = map(analogRead(LV), 0, 4095, 32737, -32737);
 
-    int value1 = map(analogRead(LH), 0, 4095, 32767, 0);
-    int value2 = map(analogRead(LV), 0, 4095, 32767, 0);
+    int value_LX = map(analogRead(LH), 0, 4095, 32767, 0);
+    int value_LY = map(analogRead(LV), 0, 4095, 32767, 0);
 
     //bleGamepad.setLeftThumb(value1, value2);
   
@@ -258,14 +280,14 @@ void loop() {
     //int value3 = map(analogRead(RH), 0, 4095, 0, 65475);
     //int value4 = map(analogRead(RV), 0, 4095, 0, 65475);
 
-    int value3 = map(analogRead(RH) , 0 , 4095 , 32767 , 0);
-    int value4 = map(analogRead(RV) , 0 , 4095 , 0 , 32767);
+    int value_RX = map(analogRead(RH) , 0 , 4095 , 32767 , 0);
+    int value_RY = map(analogRead(RV) , 0 , 4095 , 0 , 32767);
 
     //bleGamepad.setRightThumb(value3, value4);
-    bleGamepad.setX(value1);
-    bleGamepad.setY(value2);
-    bleGamepad.setRX(value3);
-    bleGamepad.setRY(value4);
+    bleGamepad.setX(value_LX);
+    bleGamepad.setY(value_LY);
+    bleGamepad.setRX(value_RX);
+    bleGamepad.setRY(value_RY);
     //Send the gamepad report
     bleGamepad.sendReport();
     delay(1);
